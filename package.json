@@ -1,0 +1,28 @@
+{
+  "name": "sport-mentor-ai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickviniciusf/sport-mentor-AI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/erickviniciusf/sport-mentor-AI/issues"
+  },
+  "homepage": "https://github.com/erickviniciusf/sport-mentor-AI#readme",
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
