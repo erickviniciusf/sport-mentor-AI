@@ -41,21 +41,39 @@ export async function startDashboard() {
 
     screen.append(content);
 
-menu.setContent(
+
+    const menuItems = ['Home', 'Partidas', 'Top Partidas', 'Análise', 'Tips', 'Config'];
+    let selectedIndex = 0;
+
+    function renderMenu() {
+    const items = menuItems.map((item, index) => {
+        return index === selectedIndex 
+? ` {green-fg}> ${item}{/green-fg}`
+:`${item}`;
+    }).join('\n');
+    
+    menu.setContent(
 `{center}{bold}SPORT MENTOR{/bold}{/center}
 {center}{green-fg}v1.0.0{/green-fg}{/center}
+${items}`
+    );
+    }
+    renderMenu(); 
+        screen.key(['up', 'k'], () => {
+    selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
+    renderMenu();
+    screen.render();
+});
 
- > Home
-   Partidas
-   Top Partidas
-   Análise
-   Tips
-   Config`
-);
+    screen.key(['down', 'j'], () => {
+    selectedIndex = (selectedIndex + 1) % menuItems.length;
+    renderMenu();
+    screen.render();
+});
     await renderHome(content);
         
     screen.render(); 
-  } catch (error) {
+    } catch (error) {
     logger.error(``, error);
     } 
 }
