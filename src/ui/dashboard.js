@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js'
 import { renderHome } from "./screens/home.js";
 import { renderPartidas } from "./screens/partidas.js";
 import { renderTopPartidas } from "./screens/topPartidas.js";
+import { renderTips } from "./screens/tips.js";
 
 export async function startDashboard() {
   try { 
@@ -78,6 +79,7 @@ ${items}`
     if (selected === 'Home') await renderHome(content);
     if (selected === 'Partidas') await renderPartidas(content);
     if (selected === 'Top Partidas') await renderTopPartidas(content);
+    if (selected === 'Tips') await renderTips(content);
     screen.render();
 });
     await renderHome(content);
