@@ -4,6 +4,7 @@ import { renderHome } from "./screens/home.js";
 import { renderPartidas } from "./screens/partidas.js";
 import { renderTopPartidas } from "./screens/topPartidas.js";
 import { renderTips } from "./screens/tips.js";
+import { renderAnalise } from "./screens/analise.js";
 
 export async function startDashboard() {
   try { 
@@ -80,6 +81,7 @@ ${items}`
     if (selected === 'Partidas') await renderPartidas(content);
     if (selected === 'Top Partidas') await renderTopPartidas(content);
     if (selected === 'Tips') await renderTips(content);
+    if (selected === 'Análise') await renderAnalise(content);
     screen.render();
 });
     await renderHome(content);
