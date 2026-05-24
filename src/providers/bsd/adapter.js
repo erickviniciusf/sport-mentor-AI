@@ -14,8 +14,16 @@ export async function getPlayerContext(eventId) {
     }
     const game = mapper.mapGame(rawGame);
     const lineup = mapper.mapLineup(rawLineup);
+
+    const homeStats = await Promise.all(
+    lineup.home.starters.map(player => getPlayerStats(player.id))
+    );
+
+    const awayStats = await Promise.all(
+    lineup.away.starters.map(player => getPlayerStats(player.id))
+    );
     
-    return { game, lineup };
+    return { game, lineup, homeStats, awayStats };
 
   } catch (error) {
         logger.error("Mensagem descritiva do que falho", error);
