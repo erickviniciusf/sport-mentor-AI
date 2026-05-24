@@ -191,7 +191,7 @@ function calculateFactors(playerStats, player, formation, market) {
   }
 
   // Limitar ao máximo 100
-  const finalScore = Math.min(score, 100);
+  const finalScore = Math.max(0, Math.min(score, 100));
 
   return { score: finalScore, factors };
 }
