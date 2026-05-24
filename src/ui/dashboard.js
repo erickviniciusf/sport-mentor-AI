@@ -1,6 +1,7 @@
 import blessed from "blessed";   
 import { logger } from '../utils/logger.js'
 import { renderHome } from "./screens/home.js";
+import { renderPartidas } from "./screens/partidas.js";
 
 export async function startDashboard() {
   try { 
@@ -68,6 +69,13 @@ ${items}`
     screen.key(['down', 'j'], () => {
     selectedIndex = (selectedIndex + 1) % menuItems.length;
     renderMenu();
+    screen.render();
+});
+
+    screen.key(['enter'], async () => {
+    const selected = menuItems[selectedIndex];
+    if (selected === 'Home') await renderHome(content);
+    if (selected === 'Partidas') await renderPartidas(content);
     screen.render();
 });
     await renderHome(content);
