@@ -34,4 +34,7 @@ async function request(endpoint) {
         export async function getPlayerStats(playerId) {
             return request(`/api/v2/events/${playerId}/player-stats/`)
         }
+        export async function getEvents(date) {
+            return request(`/api/v2/events/?date_from=${date}&date_to=${date}`);
+        }
     

@@ -1,4 +1,5 @@
-import { getPlayerContext } from './src/providers/bsd/adapter.js';
+import { getMatchesOfDay } from './src/services/matchService.js';
 
-const result = await getPlayerContext(9244);
-console.log(result);
+const matches = await getMatchesOfDay();
+console.log(`Total de jogos hoje: ${matches.length}`);
+console.log(matches[0]);
