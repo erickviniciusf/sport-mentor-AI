@@ -1,5 +1,3 @@
-import { getMatchesOfDay } from './src/services/matchService.js';
+import { startMonitor } from './src/services/monitorService.js';
 
-const matches = await getMatchesOfDay();
-console.log(`Total de jogos hoje: ${matches.length}`);
-console.log(matches[0]);
+startMonitor();
