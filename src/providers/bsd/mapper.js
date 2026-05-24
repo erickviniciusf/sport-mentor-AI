@@ -72,15 +72,25 @@
     }
 
     function mapLineup(rawLineup) {
-        return {
-            lineup_status: rawLineup.lineup_status,
-            formation: rawLineup.formation,
-            starters: rawLineup.starters.map(mapPlayer),
-            substitutes: rawLineup.substitutes.map(mapPlayer),
-            unavailable: rawLineup.unavailable,
-            updated_at: rawLineup.updated_at
+    return {
+        lineup_status: rawLineup.lineup_status,
+        updated_at: rawLineup.updated_at,
+        home: {
+            team_id: rawLineup.lineups.home.team_id,
+            team_name: rawLineup.lineups.home.team_name,
+            formation: rawLineup.lineups.home.formation,
+            starters: rawLineup.lineups.home.players.map(mapPlayer),
+            substitutes: rawLineup.lineups.home.substitutes.map(mapPlayer),
+        },
+        away: {
+            team_id: rawLineup.lineups.away.team_id,
+            team_name: rawLineup.lineups.away.team_name,
+            formation: rawLineup.lineups.away.formation,
+            starters: rawLineup.lineups.away.players.map(mapPlayer),
+            substitutes: rawLineup.lineups.away.substitutes.map(mapPlayer),
         }
     }
+}
 
 
     export const mapper  = { mapPlayer, mapPlayerStats, mapGame, mapTeam, mapLineup };
