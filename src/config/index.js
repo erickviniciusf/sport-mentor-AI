@@ -1,6 +1,5 @@
-import dotenv from "dotenv"; 
-dotenv.config(); 
-
+import dotenv from "dotenv";
+dotenv.config({ quiet: true, suppress: true });
 export const config = {
     bsd: {
         apiKey: process.env.BSD_API_KEY,

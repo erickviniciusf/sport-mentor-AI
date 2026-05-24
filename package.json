@@ -20,7 +20,7 @@
   "homepage": "https://github.com/erickviniciusf/sport-mentor-AI#readme",
   "dependencies": {
     "blessed": "^0.1.81",
-    "dotenv": "^17.4.2"
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
