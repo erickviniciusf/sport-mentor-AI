@@ -1,5 +1,7 @@
-import { getMatchesOfDay } from './src/services/matchService.js';
+import { getMatchContext } from './src/services/aiService.js';
 
-const matches = await getMatchesOfDay();
-console.log('Data enviada para BSD:', new Date().toISOString().slice(0, 10));
-console.log('Primeiro jogo:', matches[0]?.event_date, matches[0]?.home_team);
+const result = await getMatchContext('São Paulo', 'Botafogo');
+console.log('ANÁLISE:');
+console.log(result.analysis);
+console.log('\nFONTES:');
+result.sources.forEach(s => console.log('·', s));
