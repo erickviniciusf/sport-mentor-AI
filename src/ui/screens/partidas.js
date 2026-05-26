@@ -1,13 +1,18 @@
 import { getMatchesOfDay } from "../../services/matchService.js"; 
 import { logger } from "../../utils/logger.js";
-import { setPopupAberto } from "../dashboard.js";
+import { setPopupAberto, setFocoNaLista } from "../dashboard.js";
+import { getMatchContext } from "../../services/aiService.js";
+import blessed from "blessed";
 
 let pulseInterval = null;
 let dataExibida = null;
 let matchesCache = null;
+let selectedIndex = 0;
+let aiTimeout = null;
+let navHandler = null;
 
-function buildLista(matches, pulseVisible) {
-    return matches.map(match => {
+function buildLista(matches, pulseVisible, selected) {
+    return matches.map((match, index) => {
         let indicador, statusPT;
         
         if (match.status === 'notstarted') {
@@ -31,7 +36,11 @@ function buildLista(matches, pulseVisible) {
             : '';
         
         const horarioFormatado = horario.padStart(6);
-        return `${indicador} ${jogo} ${horarioFormatado}   ${statusPT}${placar}`;
+        const linha = `${indicador} ${jogo} ${horarioFormatado}   ${statusPT}${placar}`;
+        
+        return index === selected
+            ? `{green-bg}{black-fg}${linha}{/black-fg}{/green-bg}`
+            : linha;
     }).join('\n');
 }
 
@@ -77,32 +86,120 @@ function showConfirmacao(content, mensagem) {
     });
 }
 
-async function renderMatches(content, matches, dateLabel) {
+async function renderMatches(content, matches, dateLabel, screen) {
     if (pulseInterval) {
         clearInterval(pulseInterval);
         pulseInterval = null;
     }
 
-    const sep = '━'.repeat(120);
-    const header = 
-`${sep}
-{center}PARTIDAS DO DIA — ${dateLabel}{/center}
-${sep}\n\n`;
+    // Remove handler anterior se existir
+    if (navHandler) {
+        screen.removeListener('keypress', navHandler);
+        navHandler = null;
+    }
+
+    content.children?.slice().forEach(child => content.remove(child));
+
+    const sep = '━'.repeat(60);
+
+    const listaBox = blessed.box({
+        top: 0,
+        left: 0,
+        width: '50%',
+        height: '100%',
+        tags: true,
+        scrollable: true,
+        keys: true,
+        mouse: true,
+        style: { fg: 'white', bg: 'black' }
+    });
+
+    const analiseBox = blessed.box({
+        top: 0,
+        left: '50%',
+        width: '50%',
+        height: '100%',
+        tags: true,
+        scrollable: true,
+        border: { type: 'line' },
+        style: { fg: 'white', bg: 'black', border: { fg: 'cyan' } }
+    });
+
+    content.append(listaBox);
+    content.append(analiseBox);
+
+    const header = `${sep}\n{center}PARTIDAS — ${dateLabel}{/center}\n${sep}\n\n`;
 
     let pulseVisible = true;
+    selectedIndex = 0;
 
-    const render = () => {
-        content.setContent(header + buildLista(matches, pulseVisible));
-        content.screen.render();
+    const renderLista = () => {
+        listaBox.setContent(header + buildLista(matches, pulseVisible, selectedIndex));
+        screen.render();
     };
 
-    render();
+    const carregarAnalise = async (match) => {
+        analiseBox.setContent(`{center}{yellow-fg}Buscando contexto...{/yellow-fg}{/center}\n\n${match.home_team} vs ${match.away_team}`);
+        screen.render();
+
+        const ctx = await getMatchContext(match.home_team, match.away_team);
+        
+        analiseBox.setContent(
+`{center}{cyan-fg}━━ ANÁLISE IA ━━{/cyan-fg}{/center}
+{bold}${match.home_team} vs ${match.away_team}{/bold}
+
+${ctx.analysis}
+
+{gray-fg}Fontes: ${ctx.sources.slice(0, 2).join(' | ')}{/gray-fg}`
+        );
+        screen.render();
+    };
+
+    renderLista();
+    
+    if (matches.length > 0) {
+        carregarAnalise(matches[0]);
+    }
+
+    // Ativa foco na lista
+    setFocoNaLista(true);
+
+    navHandler = (ch, key) => {
+        if (!key) return;
+        
+        if (key.name === 'escape') {
+            setFocoNaLista(false);
+            if (navHandler) {
+                screen.removeListener('keypress', navHandler);
+                navHandler = null;
+            }
+            return;
+        }
+
+        if (key.name === 'up') {
+            if (selectedIndex > 0) {
+                selectedIndex--;
+                renderLista();
+                if (aiTimeout) clearTimeout(aiTimeout);
+                aiTimeout = setTimeout(() => carregarAnalise(matches[selectedIndex]), 500);
+            }
+        } else if (key.name === 'down') {
+            if (selectedIndex < matches.length - 1) {
+                selectedIndex++;
+                renderLista();
+                if (aiTimeout) clearTimeout(aiTimeout);
+                aiTimeout = setTimeout(() => carregarAnalise(matches[selectedIndex]), 500);
+            }
+        }
+    };
+
+    screen.on('keypress', navHandler);
 
     const temAoVivo = matches.some(m => !['notstarted', 'finished', 'cancelled'].includes(m.status));
     if (temAoVivo) {
         pulseInterval = setInterval(() => {
             pulseVisible = !pulseVisible;
-            render();
+            renderLista();
         }, 800);
     }
 }
@@ -121,9 +218,8 @@ export async function renderPartidas(content, screen) {
 
         const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
-        // Se já escolheu uma data, renderiza direto sem perguntar
         if (dataExibida && matchesCache) {
-            await renderMatches(content, matchesCache, dataExibida);
+            await renderMatches(content, matchesCache, dataExibida, screen);
             return;
         }
 
@@ -146,16 +242,16 @@ export async function renderPartidas(content, screen) {
                 const amanhaLabel = new Date(amanha + 'T12:00:00').toLocaleDateString('pt-BR');
                 dataExibida = amanhaLabel;
                 matchesCache = matchesAmanha;
-                await renderMatches(content, matchesAmanha, amanhaLabel);
+                await renderMatches(content, matchesAmanha, amanhaLabel, screen);
             } else {
                 dataExibida = hoje;
                 matchesCache = matches;
-                await renderMatches(content, matches, hoje);
+                await renderMatches(content, matches, hoje, screen);
             }
         } else {
             dataExibida = hoje;
             matchesCache = matches;
-            await renderMatches(content, matches, hoje);
+            await renderMatches(content, matches, hoje, screen);
         }
 
     } catch (error) {

@@ -1,5 +1,6 @@
 import { getMatchesOfDay } from "../../services/matchService.js";
 import { logger } from "../../utils/logger.js";
+import { setFocoNaLista } from "../dashboard.js";
 
 const TOP_LEAGUES = {
     1:  'Premier League',

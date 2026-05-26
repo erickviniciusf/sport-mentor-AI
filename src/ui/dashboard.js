@@ -9,6 +9,9 @@ import { renderAnalise } from "./screens/analise.js";
 export let popupAberto = false;
 export function setPopupAberto(val) { popupAberto = val; }
 
+export let focoNaLista = false;
+export function setFocoNaLista(val) { focoNaLista = val; }
+
 export async function startDashboard() {
     try { 
         const screen = blessed.screen({
@@ -80,6 +83,7 @@ ${items}`
 
         screen.key(['up', 'k'], () => {
             if (popupAberto) return;
+            if (focoNaLista) return;
             selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
             renderMenu();
             screen.render();
@@ -87,13 +91,23 @@ ${items}`
 
         screen.key(['down', 'j'], () => {
             if (popupAberto) return;
+            if (focoNaLista) return;
             selectedIndex = (selectedIndex + 1) % menuItems.length;
             renderMenu();
             screen.render();
         });
 
+        screen.key(['escape'], () => {
+            if (focoNaLista) {
+                setFocoNaLista(false);
+                renderMenu();
+                screen.render();
+            }
+        });
+
         screen.key(['enter'], async () => {
             if (popupAberto) return;
+            if (focoNaLista) return;
             const selected = menuItems[selectedIndex];
 
             screen.remove(content);
@@ -127,10 +141,10 @@ ${items}`
 
         await renderHome(content);
 
-        // setInterval DENTRO do try — tem acesso a menuItems, selectedIndex, content e screen
         setInterval(async () => {
             try {
                 if (popupAberto) return;
+                if (focoNaLista) return;
                 const selectedText = menuItems[selectedIndex];
                 if (selectedText === 'Partidas') {
                     await renderPartidas(content, screen); 
