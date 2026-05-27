@@ -216,7 +216,18 @@ export async function renderPartidas(content, screen) {
             pulseInterval = null;
         }
 
-        const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const fusoBR = 'America/Sao_Paulo';
+
+        function formatBR(date) {
+            return date
+                .toLocaleDateString('pt-BR', { timeZone: fusoBR })
+                .split('/')
+                .reverse()
+                .join('-');
+        }
+
+        const hojeDate = new Date();
+        const hojeBR = formatBR(hojeDate);
 
         if (dataExibida && matchesCache) {
             await renderMatches(content, matchesCache, dataExibida, screen);
@@ -225,9 +236,16 @@ export async function renderPartidas(content, screen) {
 
         const matches = await getMatchesOfDay();
 
-        const nenhumJogo = !matches || matches.length === 0;
-        const todosEncerrados = matches && matches.length > 0 && 
-            matches.every(m => m.status === 'finished' || m.status === 'cancelled');
+        // Só jogos DO DIA no fuso correto:
+        const matchesHoje = matches.filter(m => {
+            const eventDateObj = new Date(m.event_date);
+            const localDate = formatBR(eventDateObj);
+            return localDate === hojeBR;
+        });
+
+        const nenhumJogo = !matchesHoje || matchesHoje.length === 0;
+        const todosEncerrados = matchesHoje && matchesHoje.length > 0 &&
+            matchesHoje.every(m => m.status === 'finished' || m.status === 'cancelled');
 
         if (nenhumJogo || todosEncerrados) {
             const mensagem = nenhumJogo
@@ -239,19 +257,31 @@ export async function renderPartidas(content, screen) {
             if (resposta) {
                 const amanha = getTomorrowDate();
                 const matchesAmanha = await getMatchesOfDay(amanha);
-                const amanhaLabel = new Date(amanha + 'T12:00:00').toLocaleDateString('pt-BR');
+
+                // Calcula a data de amanhã em PT-BR
+                const amanhaObj = new Date(amanha + 'T12:00:00');
+                const amanhaBR = formatBR(amanhaObj);
+
+                // Só jogos do dia correto de amanhã
+                const matchesAmanhaHoje = matchesAmanha.filter(m => {
+                    const eventDateObj = new Date(m.event_date);
+                    const localDate = formatBR(eventDateObj);
+                    return localDate === amanhaBR;
+                });
+
+                const amanhaLabel = new Date(amanha + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: fusoBR });
                 dataExibida = amanhaLabel;
-                matchesCache = matchesAmanha;
-                await renderMatches(content, matchesAmanha, amanhaLabel, screen);
+                matchesCache = matchesAmanhaHoje;
+                await renderMatches(content, matchesAmanhaHoje, amanhaLabel, screen);
             } else {
-                dataExibida = hoje;
-                matchesCache = matches;
-                await renderMatches(content, matches, hoje, screen);
+                dataExibida = hojeDate.toLocaleDateString('pt-BR', { timeZone: fusoBR });
+                matchesCache = matchesHoje;
+                await renderMatches(content, matchesHoje, dataExibida, screen);
             }
         } else {
-            dataExibida = hoje;
-            matchesCache = matches;
-            await renderMatches(content, matches, hoje, screen);
+            dataExibida = hojeDate.toLocaleDateString('pt-BR', { timeZone: fusoBR });
+            matchesCache = matchesHoje;
+            await renderMatches(content, matchesHoje, dataExibida, screen);
         }
 
     } catch (error) {
