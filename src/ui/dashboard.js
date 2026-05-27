@@ -3,7 +3,7 @@ import { logger } from '../utils/logger.js'
 import { renderHome } from "./screens/home.js";
 import { renderPartidas, resetPartidasCache } from "./screens/partidas.js";
 import { renderTopPartidas } from "./screens/topPartidas.js";
-import { renderTips } from "./screens/tips.js";
+import { renderTips, navigateTips } from "./screens/tips.js";
 import { renderAnalise } from "./screens/analise.js";
 
 export let popupAberto = false;
@@ -11,6 +11,13 @@ export function setPopupAberto(val) { popupAberto = val; }
 
 export let focoNaLista = false;
 export function setFocoNaLista(val) { focoNaLista = val; }
+
+// ===== ESTADO PARA NAVEGAÇÃO DE TIPS =====
+export let telaAtual = 'Home';
+export function setTelaAtual(tela) { telaAtual = tela; }
+
+export let tipSelectedIndex = 0;
+export function setTipSelectedIndex(index) { tipSelectedIndex = index; }
 
 export async function startDashboard() {
     try { 
@@ -81,17 +88,36 @@ ${items}`
 
         renderMenu(); 
 
-        screen.key(['up', 'k'], () => {
+        // ===== NAVEGAÇÃO DO MENU (UP/DOWN) =====
+        screen.key(['up', 'k'], async () => {
             if (popupAberto) return;
             if (focoNaLista) return;
+            
+            // Se estiver em TIPS, usar navegação de tips ao invés de menu
+            if (telaAtual === 'Tips') {
+                tipSelectedIndex = await navigateTips(content, 'up', tipSelectedIndex);
+                screen.render();
+                return;
+            }
+
+            // Caso contrário, navegar no menu
             selectedIndex = (selectedIndex - 1 + menuItems.length) % menuItems.length;
             renderMenu();
             screen.render();
         });
 
-        screen.key(['down', 'j'], () => {
+        screen.key(['down', 'j'], async () => {
             if (popupAberto) return;
             if (focoNaLista) return;
+            
+            // Se estiver em TIPS, usar navegação de tips ao invés de menu
+            if (telaAtual === 'Tips') {
+                tipSelectedIndex = await navigateTips(content, 'down', tipSelectedIndex);
+                screen.render();
+                return;
+            }
+
+            // Caso contrário, navegar no menu
             selectedIndex = (selectedIndex + 1) % menuItems.length;
             renderMenu();
             screen.render();
@@ -130,17 +156,35 @@ ${items}`
             });
             screen.append(content);
 
-            if (selected === 'Home') await renderHome(content);
-            if (selected === 'Partidas') await renderPartidas(content, screen);
-            if (selected === 'Top Partidas') await renderTopPartidas(content);
-            if (selected === 'Tips') await renderTips(content);
-            if (selected === 'Análise') await renderAnalise(content);
+            // ===== RENDERIZAR TELA SELECIONADA =====
+            if (selected === 'Home') {
+                setTelaAtual('Home');
+                await renderHome(content);
+            }
+            if (selected === 'Partidas') {
+                setTelaAtual('Partidas');
+                await renderPartidas(content, screen);
+            }
+            if (selected === 'Top Partidas') {
+                setTelaAtual('Top Partidas');
+                await renderTopPartidas(content);
+            }
+            if (selected === 'Tips') {
+                setTelaAtual('Tips');
+                tipSelectedIndex = 0; // Reset ao entrar em TIPS
+                await renderTips(content);
+            }
+            if (selected === 'Análise') {
+                setTelaAtual('Análise');
+                await renderAnalise(content);
+            }
             
             screen.render();
         });
 
         await renderHome(content);
 
+        // ===== LOOP DE ATUALIZAÇÃO (Partidas a cada 1s) =====
         setInterval(async () => {
             try {
                 if (popupAberto) return;
@@ -158,6 +202,6 @@ ${items}`
         screen.render(); 
 
     } catch (error) {
-        logger.error(``, error);
+        logger.error(`Erro ao iniciar dashboard`, error);
     } 
 }
