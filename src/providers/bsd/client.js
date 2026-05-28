@@ -30,8 +30,8 @@ export async function getEvent(id) {
     return request(`/api/v2/events/${id}`);
 }
 
-export async function getEvents(date) {
-    return request(`/api/v2/events/?date_from=${date}&date_to=${date}`);
+export async function getEvents(dateFrom, dateTo) {
+    return request(`/api/v2/events/?date_from=${dateFrom}&date_to=${dateTo}&limit=200`);
 }
 
 // ============================================
@@ -51,7 +51,7 @@ export async function getLineup(eventId) {
  * @returns {Promise<Object>} Stats do jogador em ordem descente (mais recente primeiro)
  */
 export async function getPlayerStats(playerId, limit = 10) {
-    return request(`/api/v2/players/${playerId}/stats/?limit=${limit}`);
+    return request(`/api/player-stats/?player=${playerId}&limit=${limit}`);
 }
 
 // ============================================

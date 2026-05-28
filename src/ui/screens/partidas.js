@@ -235,17 +235,9 @@ export async function renderPartidas(content, screen) {
         }
 
         const matches = await getMatchesOfDay();
-
-        // Só jogos DO DIA no fuso correto:
-        const matchesHoje = matches.filter(m => {
-            const eventDateObj = new Date(m.event_date);
-            const localDate = formatBR(eventDateObj);
-            return localDate === hojeBR;
-        });
-
-        const nenhumJogo = !matchesHoje || matchesHoje.length === 0;
-        const todosEncerrados = matchesHoje && matchesHoje.length > 0 &&
-            matchesHoje.every(m => m.status === 'finished' || m.status === 'cancelled');
+        const nenhumJogo = !matches || matches.length === 0;
+        const todosEncerrados = matches && matches.length > 0 &&
+            matches.every(m => m.status === 'finished' || m.status === 'cancelled');
 
         if (nenhumJogo || todosEncerrados) {
             const mensagem = nenhumJogo
@@ -275,13 +267,13 @@ export async function renderPartidas(content, screen) {
                 await renderMatches(content, matchesAmanhaHoje, amanhaLabel, screen);
             } else {
                 dataExibida = hojeDate.toLocaleDateString('pt-BR', { timeZone: fusoBR });
-                matchesCache = matchesHoje;
-                await renderMatches(content, matchesHoje, dataExibida, screen);
+                matchesCache = matches;
+                await renderMatches(content, matches, dataExibida, screen);
             }
         } else {
             dataExibida = hojeDate.toLocaleDateString('pt-BR', { timeZone: fusoBR });
-            matchesCache = matchesHoje;
-            await renderMatches(content, matchesHoje, dataExibida, screen);
+            matchesCache = matches;
+            await renderMatches(content, matches, dataExibida, screen);
         }
 
     } catch (error) {

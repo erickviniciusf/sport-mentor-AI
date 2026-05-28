@@ -89,34 +89,36 @@ export async function renderAnalise(content) {
                 : '{yellow-fg}[ESCALAÇÃO NÃO CONFIRMADA AINDA]{/yellow-fg}';
 
             // ===== CABEÇALHO DO JOGO =====
-            output += `\n${sep}\n`;
-            output += `{bold}ANÁLISE: ${match.home_team} vs ${match.away_team}{/bold}\n`;
-            output += `Formação: {cyan-fg}${context.lineup.home.formation}{/cyan-fg} vs {cyan-fg}${context.lineup.away.formation}{/cyan-fg}\n`;
-            output += `Status: ${statusIndicador}\n`;
-            output += `${sep}\n\n`;
+output += `\n${sep}\n`;
+output += `{bold}ANÁLISE: ${match.home_team} vs ${match.away_team}{/bold}\n`;
+output += `Formação: {cyan-fg}${context.lineup.home.formation}{/cyan-fg} vs {cyan-fg}${context.lineup.away.formation}{/cyan-fg}\n`;
 
-            // ===== EXIBIR CONVICTIONS RESUMIDO (TODOS OS JOGADORES) =====
-            output += sorted.map(c => {
-                const indicator = c.score >= 70
-                    ? '{green-fg}[TIP]{/green-fg}'
-                    : '     ';
-                return ` ${indicator} ${c.playerName.padEnd(25)} | ${c.market.padEnd(8)} | {yellow-fg}${String(c.score).padStart(3)}/100{/yellow-fg}`;
-            }).join('\n');
+output += `Status: ${statusIndicador}\n`;
+output += `${sep}\n\n`;
 
-            // ===== EXIBIR TIPS GERADOS (SCORE >= 70 COM DETALHES) =====
-            if (tips.length > 0) {
-                output += `\n\n{green-fg}{bold}TIPS GERADOS (${tips.length}):{/bold}{/green-fg}\n`;
-                output += tips.map(tip => {
-                    const recLine = tip.recommendations && tip.recommendations.length > 0 
-                        ? tip.recommendations[0].line 
-                        : 'N/A';
-                    return `  | ${tip.playerName.padEnd(20)} | Over ${recLine.padEnd(5)} | Conviction: ${String(tip.score).padStart(3)}/100 | ${tip.scoreLabel}`;
-                }).join('\n');
-            } else {
-                output += `\n\n{red-fg}Nenhum tip para este jogo.{/red-fg}`;
-            }
+// ===== EXIBIR CONVICTIONS RESUMIDO (TODOS OS JOGADORES) =====
+output += sorted.map(c => {
+    const indicator = c.score >= 70
+        ? '{green-fg}[TIP]{/green-fg}'
+        : '     ';
+    // Inclui a posição (c.position) se disponível (p/ analise técnica)
+    return ` ${indicator} ${c.playerName.padEnd(22)} | ${(c.position || '--').padEnd(2)} | ${c.market.padEnd(8)} | {yellow-fg}${String(c.score).padStart(3)}/100{/yellow-fg}`;
+}).join('\n');
 
-            output += '\n';
+// ===== EXIBIR TIPS GERADOS (SCORE >= 70 COM DETALHES) =====
+if (tips.length > 0) {
+    output += `\n\n{green-fg}{bold}TIPS GERADOS (${tips.length}):{/bold}{/green-fg}\n`;
+    output += tips.map(tip => {
+        const recLine = tip.recommendations && tip.recommendations.length > 0 
+            ? tip.recommendations[0].line 
+            : 'N/A';
+        return `  | ${tip.playerName.padEnd(20)} | Over ${recLine.padEnd(5)} | Conviction: ${String(tip.score).padStart(3)}/100 | ${tip.scoreLabel}`;
+    }).join('\n');
+} else {
+    output += `\n\n{red-fg}Nenhum tip para este jogo.{/red-fg}`;
+}
+
+output += '\n';
         }
 
         // ===== ARMAZENAR TODOS OS TIPS NO STATE GLOBAL =====

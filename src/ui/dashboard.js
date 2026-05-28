@@ -163,6 +163,7 @@ ${items}`
             }
             if (selected === 'Partidas') {
                 setTelaAtual('Partidas');
+                resetPartidasCache();
                 await renderPartidas(content, screen);
             }
             if (selected === 'Top Partidas') {
