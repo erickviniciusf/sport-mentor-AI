@@ -1,25 +1,70 @@
 import { logger } from "../../utils/logger.js";
 import { config } from "../../config/index.js";
+import { APIError, NetworkError, TimeoutError, handleError } from "../../core/index.js";
 
 const BSD_API_KEY = config.bsd.apiKey 
 const BSD_BASE_URL = config.bsd.baseUrl
 
+const REQUEST_TIMEOUT = 15000; // 15 segundos
+
 async function request(endpoint) {
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
         const response = await fetch(`${BSD_BASE_URL}${endpoint}`, {
             headers: {
                 Authorization: `Token ${BSD_API_KEY}`
-            }
+            },
+            signal: controller.signal
         });
 
+        clearTimeout(timeout);
+
         if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status}`);
+            throw new APIError(
+                `BSD API returned ${response.status}`,
+                response.status,
+                { endpoint, statusCode: response.status }
+            );
         }
 
         return response.json(); 
     } catch (error) {
-        logger.error(`Erro ao chamar endpoint ${endpoint}`, error);
-        throw error; 
+        // Erro de timeout
+        if (error.name === 'AbortError') {
+            const timeoutError = new TimeoutError(
+                `Request to ${endpoint}`,
+                REQUEST_TIMEOUT,
+                { endpoint }
+            );
+            handleError(timeoutError, { endpoint });
+            throw timeoutError;
+        }
+
+        // Erro de conexão/rede
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            const networkError = new NetworkError(
+                `Failed to connect to BSD API at ${BSD_BASE_URL}`,
+                { endpoint, originalError: error.message }
+            );
+            handleError(networkError, { endpoint });
+            throw networkError;
+        }
+
+        // Erro genérico
+        if (error instanceof APIError) {
+            handleError(error, { endpoint });
+            throw error;
+        }
+
+        const genericError = new APIError(
+            `Request to ${endpoint} failed: ${error.message}`,
+            500,
+            { endpoint, originalError: error.message }
+        );
+        handleError(genericError, { endpoint });
+        throw genericError;
     }     
 }
 
@@ -107,7 +152,11 @@ export async function getHeadToHeadMatches(homeTeamId, awayTeamId, limit = 10) {
 
         return { count: h2hMatches.length, results: h2hMatches };
     } catch (error) {
-        logger.error(`Erro ao buscar H2H entre times ${homeTeamId} vs ${awayTeamId}`, error);
+        handleError(error, { 
+            operation: 'getHeadToHeadMatches',
+            homeTeamId, 
+            awayTeamId 
+        });
         throw error;
     }
 }

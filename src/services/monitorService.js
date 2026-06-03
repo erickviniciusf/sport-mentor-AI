@@ -1,7 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { getPlayerContext } from '../providers/bsd/adapter.js';
 import { getMatchesOfDay } from './matchService.js';
-import { eventBus, EVENTS } from '../core/index.js';
+import { eventBus, EVENTS, handleError } from '../core/index.js';
 
 // Cache em memória para garantir que cada lineup seja notificado apenas UMA vez por sessão
 const notifiedMatches = new Set();
@@ -29,22 +29,31 @@ async function startMonitor() {
                 // Se já notificamos este jogo, pulamos para economizar processamento
                 if (notifiedMatches.has(match.id)) continue;
 
-                const context = await getPlayerContext(match.id);
-                
-                if (context) {
-                    logger.info(`[NOVO LINEUP] ${match.home_team} vs ${match.away_team}`);
+                try {
+                    const context = await getPlayerContext(match.id);
+                    
+                    if (context) {
+                        logger.info(`[NOVO LINEUP] ${match.home_team} vs ${match.away_team}`);
 
-                    // Emitir evento quando lineup é confirmado
-                    eventBus.emit(EVENTS.LINEUP_CONFIRMED, {
+                        // Emitir evento quando lineup é confirmado
+                        eventBus.emit(EVENTS.LINEUP_CONFIRMED, {
+                            matchId: match.id,
+                            homeTeam: match.home_team,
+                            awayTeam: match.away_team,
+                            context,
+                            timestamp: Date.now()
+                        });
+
+                        notifiedMatches.add(match.id); 
+                    }
+                } catch (error) {
+                    // Não falhar o ciclo inteiro por falha em um jogo
+                    handleError(error, {
+                        operation: 'getPlayerContext',
                         matchId: match.id,
-                        homeTeam: match.home_team,
-                        awayTeam: match.away_team,
-                        context,
-                        timestamp: Date.now()
+                        matchName: `${match.home_team} vs ${match.away_team}`
                     });
-
-                    notifiedMatches.add(match.id); 
-                } 
+                }
             }  
 
             // Emitir evento de conclusão do ciclo
@@ -55,14 +64,13 @@ async function startMonitor() {
             });
                 
         } catch (error) {
-            // Emitir evento de erro
-            logger.error("Monitor cycle error", error);
-
-            eventBus.emit(EVENTS.ERROR_OCCURRED, {
-                type: 'monitor:error',
-                message: error.message,
-                timestamp: Date.now()
+            // Falha no ciclo geral (ex: fetch de matches falhou)
+            const handledError = handleError(error, { 
+                operation: 'monitor_cycle',
+                cycleNumber: notifiedMatches.size
             });
+
+            logger.warn(`Monitor will retry in 60s after error: ${handledError.message}`);
         } 
         
         // Aguarda 1 minuto para próximo ciclo

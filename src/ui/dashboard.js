@@ -81,9 +81,10 @@ export async function startDashboard() {
             }).join('\n');
             
             menu.setContent(
-` {center}{bold}SPORT MENTOR{/bold}{/center}
- {center}{green-fg}v1.0.0{/green-fg}{/center}
- ${items}`
+`{center}{bold}SPORT MENTOR{/bold}{/center}
+{center}{green-fg}v1.0.0{/green-fg}{/center}
+
+${items}`
             );
         }
 
