@@ -1,4 +1,4 @@
-import { getMatchesOfDay } from "../../services/matchService.js"; 
+import { getMatchesOfDay } from "../../services/matchService.js";
 import { logger } from "../../utils/logger.js";
 import { setPopupAberto, setFocoNaLista } from "../dashboard.js";
 import { getMatchContext } from "../../services/aiService.js";
@@ -11,10 +11,10 @@ let selectedIndex = 0;
 let aiTimeout = null;
 let navHandler = null;
 
-function buildLista(matches, pulseVisible, selected) {
+function buildLista(matches, pulseVisible, selected) { // recebe o índice do jogo selecionado
     return matches.map((match, index) => {
         let indicador, statusPT;
-        
+
         if (match.status === 'notstarted') {
             indicador = '{white-fg}[○]{/white-fg}';
             statusPT = 'EM BREVE';
@@ -25,7 +25,7 @@ function buildLista(matches, pulseVisible, selected) {
             indicador = pulseVisible ? '{green-fg}[●]{/green-fg}' : '{green-fg}[ ]{/green-fg}';
             statusPT = '{green-fg}AO VIVO{/green-fg}';
         }
-        
+
         const horario = match.status === 'notstarted'
             ? new Date(match.event_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
             : `${match.current_minute}'`;
@@ -34,10 +34,10 @@ function buildLista(matches, pulseVisible, selected) {
         const placar = (['finished', '1st_half', 'halftime', '2nd_half'].includes(match.status) && match.home_score !== null)
             ? `  ${match.home_score}-${match.away_score}`
             : '';
-        
+
         const horarioFormatado = horario.padStart(6);
         const linha = `${indicador} ${jogo} ${horarioFormatado}   ${statusPT}${placar}`;
-        
+
         return index === selected
             ? `{green-bg}{black-fg}${linha}{/black-fg}{/green-bg}`
             : linha;
@@ -58,8 +58,8 @@ function showConfirmacao(content, mensagem) {
         setPopupAberto(true);
 
         const sep = '━'.repeat(80);
-        const tela = 
-`\n\n\n\n
+        const tela =
+            `\n\n\n\n
 {center}${sep}{/center}
 {center}{yellow-fg}${mensagem}{/yellow-fg}{/center}
 
@@ -143,9 +143,9 @@ async function renderMatches(content, matches, dateLabel, screen) {
         screen.render();
 
         const ctx = await getMatchContext(match.home_team, match.away_team);
-        
+
         analiseBox.setContent(
-`{center}{cyan-fg}━━ ANÁLISE IA ━━{/cyan-fg}{/center}
+            `{center}{cyan-fg}━━ ANÁLISE IA ━━{/cyan-fg}{/center}
 {bold}${match.home_team} vs ${match.away_team}{/bold}
 
 ${ctx.analysis}
@@ -156,7 +156,7 @@ ${ctx.analysis}
     };
 
     renderLista();
-    
+
     if (matches.length > 0) {
         carregarAnalise(matches[0]);
     }
@@ -166,7 +166,7 @@ ${ctx.analysis}
 
     navHandler = (ch, key) => {
         if (!key) return;
-        
+
         if (key.name === 'escape') {
             setFocoNaLista(false);
             if (navHandler) {
@@ -210,13 +210,13 @@ export function resetPartidasCache() {
 }
 
 export async function renderPartidas(content, screen) {
-    try { 
+    try {
         if (pulseInterval) {
             clearInterval(pulseInterval);
             pulseInterval = null;
         }
 
-        const fusoBR = 'America/Sao_Paulo';
+        const fusoBR = 'America/Sao_Paulo'; // Definindo o fuso horário para Brasil 
 
         function formatBR(date) {
             return date

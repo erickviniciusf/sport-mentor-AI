@@ -1,5 +1,6 @@
 import blessed from "blessed";   
 import { logger } from '../utils/logger.js'
+import { eventBus, EVENTS } from '../core/index.js';
 import { renderHome } from "./screens/home.js";
 import { renderPartidas, resetPartidasCache } from "./screens/partidas.js";
 import { renderTopPartidas } from "./screens/topPartidas.js";
@@ -80,13 +81,63 @@ export async function startDashboard() {
             }).join('\n');
             
             menu.setContent(
-`{center}{bold}SPORT MENTOR{/bold}{/center}
-{center}{green-fg}v1.0.0{/green-fg}{/center}
-${items}`
+` {center}{bold}SPORT MENTOR{/bold}{/center}
+ {center}{green-fg}v1.0.0{/green-fg}{/center}
+ ${items}`
             );
         }
 
         renderMenu(); 
+
+        // ===== EVENT LISTENERS — Sincronizar com dados em tempo real =====
+        
+        // Quando monitor atualiza lista de partidas
+        eventBus.on(EVENTS.MATCH_LIST_UPDATED, async ({ matches, count }) => {
+            logger.info('Dashboard: match list updated', { count });
+            
+            // Se estamos na tela Partidas, atualizar
+            if (telaAtual === 'Partidas') {
+                try {
+                    await renderPartidas(content, screen);
+                    screen.render();
+                } catch (err) {
+                    logger.error('Error updating Partidas display', { error: err.message });
+                }
+            }
+        });
+
+        // Quando um novo lineup é confirmado
+        eventBus.on(EVENTS.LINEUP_CONFIRMED, ({ homeTeam, awayTeam, matchId }) => {
+            logger.info('Dashboard: new lineup confirmed', { matchId, homeTeam, awayTeam });
+            
+            // Se estamos na tela Home, mostrar notificação
+            if (telaAtual === 'Home') {
+                // Poderia emitir visual feedback aqui
+            }
+        });
+
+        // Quando análise é completa
+        eventBus.on(EVENTS.ANALYSIS_COMPLETE, ({ tips, convictions }) => {
+            logger.info('Dashboard: analysis complete', { 
+                tipsGenerated: tips.length,
+                playersAnalyzed: convictions.length 
+            });
+            
+            // Se estamos em Tips, atualizar
+            if (telaAtual === 'Tips') {
+                try {
+                    // Renderizar tips será acionado pela UI de Tips
+                } catch (err) {
+                    logger.error('Error updating Tips display', { error: err.message });
+                }
+            }
+        });
+
+        // Erro no monitor
+        eventBus.on(EVENTS.ERROR_OCCURRED, ({ type, message }) => {
+            logger.warn('Dashboard: error event received', { type, message });
+            // Poderia mostrar notificação visual ao usuário
+        });
 
         // ===== NAVEGAÇÃO DO MENU (UP/DOWN) =====
         screen.key(['up', 'k'], async () => {
@@ -202,7 +253,14 @@ ${items}`
 
         screen.render(); 
 
+        logger.info('Dashboard started successfully', {
+            timestamp: Date.now()
+        });
+
     } catch (error) {
-        logger.error(`Erro ao iniciar dashboard`, error);
+        logger.error(`Erro ao iniciar dashboard`, { 
+            error: error.message,
+            timestamp: Date.now()
+        });
     } 
 }

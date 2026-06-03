@@ -38,7 +38,9 @@ async function listarJogosHoje() {
             + `DIABR: ${eventDateBr} ${horaBr}`
         );
     });
-}
+} 
+
+
 
 listarJogosHoje().catch(err => {
     console.error("[TEST] Erro de execução no teste:", err);
