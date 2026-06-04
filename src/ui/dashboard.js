@@ -24,7 +24,7 @@ export async function startDashboard() {
     try { 
         const screen = blessed.screen({
             smartCSR: true,
-            title: 'Sport Mentor v1.0.0',
+            title: 'Sport Mentor v1.0.1',
             fullUnicode: true
         }); 
 
@@ -82,7 +82,7 @@ export async function startDashboard() {
             
             menu.setContent(
 `{center}{bold}SPORT MENTOR{/bold}{/center}
-{center}{green-fg}v1.0.0{/green-fg}{/center}
+{center}{green-fg}v1.0.1{/green-fg}{/center}
 
 ${items}`
             );
