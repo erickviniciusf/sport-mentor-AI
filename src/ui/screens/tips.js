@@ -149,7 +149,7 @@ function renderTipsListSummary(tips) {
   }).join('\n');
 
   output += `\n\n{cyan-fg}Selecione um tip acima para ver detalhes completos.{/cyan-fg}\n`;
-  output += `Use as setas {bold}↑{/bold} e {bold}↓{/bold} para navegar.\n`;
+  output += `Use as setas {bold}↑{/bold} e {bold}↓{/bold} para navegar — {bold}ESC{/bold} para voltar ao menu.\n`;
 
   return output;
 }

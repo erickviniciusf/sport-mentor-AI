@@ -180,6 +180,14 @@ ${items}`
                 setFocoNaLista(false);
                 renderMenu();
                 screen.render();
+                return;
+            }
+
+            // Em Tips as setas navegam os tips; ESC devolve o controle ao menu.
+            if (telaAtual === 'Tips') {
+                setTelaAtual('Menu');
+                renderMenu();
+                screen.render();
             }
         });
 

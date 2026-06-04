@@ -1,6 +1,7 @@
 import { getMatchesOfDay } from "../../services/matchService.js";
 import { logger } from "../../utils/logger.js";
 import { setFocoNaLista } from "../dashboard.js";
+import { sortByRelevance, getBadge } from "../../engines/relevanceEngine.js";
 
 const TOP_LEAGUES = {
     1:  'Premier League',
@@ -22,6 +23,25 @@ const TOP_LEAGUES = {
     32: 'Copa Libertadores',
     33: 'Copa Sudamericana',
     35: 'Copa do Brasil',
+
+    // Copas nacionais (mata-mata de clubes)
+    39: 'FA Cup',
+    40: 'Carabao Cup',
+    41: 'Copa del Rey',
+    42: 'Coppa Italia',
+    43: 'DFB Pokal',
+    44: 'Coupe de France',
+
+    // Seleções — eliminatórias, Nations League e amistosos
+    31: 'Amistoso Int.',
+    58: 'Elim. UEFA',
+    59: 'Elim. CONMEBOL',
+    60: 'Elim. CAF',
+    61: 'Elim. AFC',
+    62: 'Elim. CONCACAF',
+    63: 'Elim. OFC',
+    64: 'UEFA Nations',
+    65: 'CONCACAF NL',
 };
 
 export async function renderTopPartidas(content) {
@@ -29,8 +49,12 @@ export async function renderTopPartidas(content) {
         const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         const matches = await getMatchesOfDay();
 
-        // Filtra apenas ligas top
-        const topMatches = matches.filter(match => TOP_LEAGUES[match.league_id]);
+        // Filtra apenas ligas top e ordena pela relevância (mais importante primeiro).
+        // A relevância é calculada localmente (clássico, times grandes, peso da liga,
+        // fase/decisão) — a API não fornece esse dado. Ver relevanceEngine.js.
+        const topMatches = sortByRelevance(
+            matches.filter(match => TOP_LEAGUES[match.league_id])
+        );
 
         const sep = '━'.repeat(120);
         const header = 
@@ -69,7 +93,12 @@ ${sep}\n\n`;
             const horarioFormatado = horario.padStart(6);
             const liga = `{cyan-fg}[${TOP_LEAGUES[match.league_id]}]{/cyan-fg}`;
 
-            return `${indicador} ${jogo} ${horarioFormatado}   ${statusPT}${placar}  ${liga}`;
+            // Selo de relevância (🔥 CLÁSSICO / ⭐ DESTAQUE) — vazio para jogos comuns.
+            // Vai no fim da linha pra não quebrar o alinhamento das colunas anteriores.
+            const badge = getBadge(match._relevance);
+            const badgeFormatado = badge ? `  ${badge}` : '';
+
+            return `${indicador} ${jogo} ${horarioFormatado}   ${statusPT}${placar}  ${liga}${badgeFormatado}`;
         }).join('\n');
 
         content.setContent(header + lista);
