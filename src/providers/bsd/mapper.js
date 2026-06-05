@@ -1,11 +1,12 @@
 
     function mapPlayer(rawPlayer) {
+        if (!rawPlayer) return null;
         return {
-            id: rawPlayer.id,
-            name: rawPlayer.name,
-            short_name: rawPlayer.short_name,
-            position: rawPlayer.position,
-            jersey: rawPlayer.jersey
+            id: rawPlayer.id || null,
+            name: rawPlayer.name || '',
+            short_name: rawPlayer.short_name || '',
+            position: rawPlayer.position || '',
+            jersey: rawPlayer.jersey || ''
         }
     }
 
@@ -72,25 +73,29 @@
     }
 
     function mapLineup(rawLineup) {
-    return {
-        lineup_status: rawLineup.lineup_status,
-        updated_at: rawLineup.updated_at,
-        home: {
-            team_id: rawLineup.lineups.home.team_id,
-            team_name: rawLineup.lineups.home.team_name,
-            formation: rawLineup.lineups.home.formation,
-            starters: rawLineup.lineups.home.players.map(mapPlayer),
-            substitutes: rawLineup.lineups.home.substitutes.map(mapPlayer),
-        },
-        away: {
-            team_id: rawLineup.lineups.away.team_id,
-            team_name: rawLineup.lineups.away.team_name,
-            formation: rawLineup.lineups.away.formation,
-            starters: rawLineup.lineups.away.players.map(mapPlayer),
-            substitutes: rawLineup.lineups.away.substitutes.map(mapPlayer),
+        if (!rawLineup) return null;
+        const lineups = rawLineup.lineups || {};
+        const home = lineups.home || {};
+        const away = lineups.away || {};
+        return {
+            lineup_status: rawLineup.lineup_status || 'unknown',
+            updated_at: rawLineup.updated_at || '',
+            home: {
+                team_id: home.team_id || null,
+                team_name: home.team_name || '',
+                formation: home.formation || '',
+                starters: Array.isArray(home.players) ? home.players.map(mapPlayer).filter(Boolean) : [],
+                substitutes: Array.isArray(home.substitutes) ? home.substitutes.map(mapPlayer).filter(Boolean) : [],
+            },
+            away: {
+                team_id: away.team_id || null,
+                team_name: away.team_name || '',
+                formation: away.formation || '',
+                starters: Array.isArray(away.players) ? away.players.map(mapPlayer).filter(Boolean) : [],
+                substitutes: Array.isArray(away.substitutes) ? away.substitutes.map(mapPlayer).filter(Boolean) : [],
+            }
         }
     }
-}
 
 
     export const mapper  = { mapPlayer, mapPlayerStats, mapGame, mapTeam, mapLineup };

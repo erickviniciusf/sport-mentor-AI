@@ -8,19 +8,24 @@ export async function getPlayerContext(eventId) {
     const rawGame = await getEvent(eventId);
     const rawLineup = await getLineup(eventId); 
     
-    if (!rawLineup.lineup_status || !['confirmed', 'predicted'].includes(rawLineup.lineup_status)) {
-    logger.warn(`Lineup não disponível para o evento ${eventId}`);
-    return null;
+    if (!rawLineup || !rawLineup.lineup_status || !['confirmed', 'predicted'].includes(rawLineup.lineup_status)) {
+      logger.warn(`Lineup não disponível para o evento ${eventId}`);
+      return null;
     }
     const game = mapper.mapGame(rawGame);
     const lineup = mapper.mapLineup(rawLineup);
 
+    if (!lineup || !lineup.home.starters.length || !lineup.away.starters.length) {
+      logger.warn(`Lineup incompleto ou sem jogadores titulares para o evento ${eventId}`);
+      return null;
+    }
+
     const homeStats = await Promise.all(
-    lineup.home.starters.map(player => getPlayerStats(player.id))
+      lineup.home.starters.map(player => getPlayerStats(player.id))
     );
 
     const awayStats = await Promise.all(
-    lineup.away.starters.map(player => getPlayerStats(player.id))
+      lineup.away.starters.map(player => getPlayerStats(player.id))
     );
     
     return { game, lineup, homeStats, awayStats, lineup_status: rawLineup.lineup_status };

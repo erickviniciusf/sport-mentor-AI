@@ -238,6 +238,7 @@ ${items}`
             if (selected === 'Análise') {
                 setTelaAtual('Análise');
                 await renderAnalise(content);
+                console.log('Tela Análise renderizada'); // Debug
             }
             
             screen.render();
